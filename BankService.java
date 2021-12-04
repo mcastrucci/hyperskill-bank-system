@@ -69,8 +69,8 @@ public class BankService {
         // we have now a new cardNumber. lets check if already exists in our database (it should not happen after the
         // first check
         if(cardNumber != null && cardNumber.length() > 0) {
-            Card card = dataBase.getCard(cardNumber);
-            if (card != null) { // something went wrong and card already exist
+            boolean exist = dataBase.checkCardNumber(cardNumber);
+            if (exist) { // something went wrong and card already exist
                 successCreation = false;
             }
         } else { // this should not happen
@@ -109,10 +109,21 @@ public class BankService {
         return correct;
     }
 
-    /*
-        It generates a checksum for the currentAcount number using Luhn Algorithm
-        It returns -1 if something fails
-    */
+    /**
+     * Checks if an account number / cardNumber exist
+     * @param cardNumber
+     * @return true if it exist, false if not
+     */
+    public boolean checkIfAccountExist(String cardNumber) {
+        return dataBase.getCard(cardNumber) != null ? true : false;
+    }
+
+
+    /**
+     * Generates a checksum for the current account number using the lughn algorithm
+     * @param cardNumberWithoutChecksum
+     * @return the checksum or -1 if it fails
+     */
     public int generateChecksum(String cardNumberWithoutChecksum) {
         // first we need to calculate the control number, for that, we will summ all digits of the cardNumber
         int sum = 0;
@@ -142,6 +153,24 @@ public class BankService {
     }
 
     /**
+     * Check if card number is valid by applying the Luhn algorithm
+     * @param cardNumber
+     * @return true if the card is valid, valse if not
+     */
+    public boolean checkCardNumberValid(String cardNumber) {
+        String cardNumberWithoutChecksum = cardNumber.substring(0, cardNumber.length() -1); // removes the checksum
+        int checksum = generateChecksum(cardNumberWithoutChecksum);
+
+        if (checksum >= 0) {
+            // generated checksum should match cardNumber
+            if ((cardNumberWithoutChecksum + checksum).equalsIgnoreCase(cardNumber)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Gets the pin number for current Card
      * @param cardNumber
      * @return pinNumber
@@ -156,8 +185,9 @@ public class BankService {
         return pinNumber;
     }
 
-    /*
-        It creates a random account Number
+    /**
+     * creates a random account number
+     * @return account number
      */
     private int createRandomAccountNumber() {
         int intervalAccountNumber = 999999999 - 100000000 + 1;
@@ -167,18 +197,45 @@ public class BankService {
     /**
      * gets currentUserBalance
      * @param cardNumber
-     * @return
+     * @return the balance or -1 i somethign went wrong
      */
     public long getBalance(String cardNumber) {
-        long balance = 0;
+        long balance = -1;
         Card card = dataBase.getCard(cardNumber);
 
         if (card != null) {
             balance = card.getBalance();
         }
-        return balance;    }
+        return balance;
+    }
+
+    /**
+     * adds an income into the database
+     * @param cardNumber
+     * @param amount
+     * @return true if it was successful, false if it failed
+     */
+    public boolean addIncome(String cardNumber, long amount) {
+        return this.dataBase.updateBalance(cardNumber, amount);
+    }
+
+
+    /**
+     * transfer money between accounts
+     * @param originCard - the original account
+     * @param receptorCard - the receptor account
+     * @param amount - the amount to transfer (will be summed in the receptor and substracted in the origin)
+     * @return true if succesful
+     */
+    public boolean transferMoney(String originCard, String receptorCard, long amount) {
+        return this.dataBase.transfer(originCard, receptorCard, amount);
+    }
 
     public void setDataBase(BankDb dataBase) {
         this.dataBase = dataBase;
+    }
+
+    public boolean deleteAccount(String cardNumber) {
+        return dataBase.deleteAccount(cardNumber);
     }
 }

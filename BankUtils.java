@@ -3,8 +3,10 @@ package banking;
 import java.util.Scanner;
 
 public class BankUtils {
-    /*
-        It gets the user input and checks if it is a correct format
+
+    /**
+     * It gets the user input and checks if it is a correct format
+     * @return the option selected by the user
      */
     public int getUserNumericInput() {
         Scanner scanner = new Scanner(System.in);
@@ -17,6 +19,22 @@ public class BankUtils {
             userSelection = getUserNumericInput(); // executing again
         }
         return userSelection;
+    }
+
+    /**
+     * it uses Scanner to get user amount
+     * @return the amount that the user did input
+     */
+    public long getUserAmount() {
+        Scanner scanner = new Scanner(System.in);
+        long userAmount = 0;
+        try {
+            userAmount = scanner.nextLong();
+        } catch(Exception ex) {
+            System.out.println("Incorrect input amount");
+            userAmount = getUserAmount(); // executing again
+        }
+        return userAmount;
     }
 
     /*
